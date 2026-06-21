@@ -1,0 +1,25 @@
+# ============================================================
+# Workspace Manager - Python Dependencies
+# ============================================================
+# Install all dependencies with:
+#   pip install -r requirements.txt
+#
+# Compatible with Python 3.12, 3.13, and 3.14.
+# ============================================================
+
+# Speech recognition engine -- converts audio to text.
+# Uses Google's free Web Speech API by default (requires internet).
+SpeechRecognition>=3.11.0
+
+# Audio capture -- records from the microphone as NumPy arrays.
+# Ships with pre-built PortAudio binaries, so unlike PyAudio it
+# installs cleanly on Python 3.12 - 3.14 without a C compiler.
+sounddevice>=0.5.0
+
+# WAV file I/O -- writes recorded audio to a temp .wav file
+# that SpeechRecognition can read.
+scipy>=1.13.0
+
+# Text-to-speech engine -- optional, for future voice feedback
+# (e.g. confirming which workspace was launched).
+pyttsx3>=2.98

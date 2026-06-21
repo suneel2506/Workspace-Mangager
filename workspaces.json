@@ -1,0 +1,96 @@
+{
+    "coding": [
+        {
+            "type": "app",
+            "path": "code",
+            "name": "VS Code"
+        },
+        {
+            "type": "url",
+            "value": "https://chatgpt.com",
+            "name": "ChatGPT"
+        },
+        {
+            "type": "url",
+            "value": "https://github.com",
+            "name": "GitHub"
+        }
+    ],
+
+    "embedded": [
+        {
+            "type": "app",
+            "path": "code",
+            "name": "VS Code"
+        },
+        {
+            "type": "url",
+            "value": "https://docs.espressif.com",
+            "name": "ESP-IDF Docs"
+        },
+        {
+            "type": "url",
+            "value": "https://www.arduino.cc/reference/en/",
+            "name": "Arduino Reference"
+        }
+    ],
+
+    "vlsi": [
+        {
+            "type": "url",
+            "value": "https://nandland.com",
+            "name": "Nandland"
+        },
+        {
+            "type": "url",
+            "value": "https://hdlbits.01xz.net/wiki/Main_Page",
+            "name": "HDLBits"
+        }
+    ],
+
+    "college": [
+        {
+            "type": "url",
+            "value": "https://classroom.google.com",
+            "name": "Google Classroom"
+        },
+        {
+            "type": "url",
+            "value": "https://drive.google.com",
+            "name": "Google Drive"
+        },
+        {
+            "type": "url",
+            "value": "https://mail.google.com",
+            "name": "Gmail"
+        }
+    ],
+
+    "hackathon": [
+        {
+            "type": "app",
+            "path": "code",
+            "name": "VS Code"
+        },
+        {
+            "type": "url",
+            "value": "https://chatgpt.com",
+            "name": "ChatGPT"
+        },
+        {
+            "type": "url",
+            "value": "https://github.com",
+            "name": "GitHub"
+        },
+        {
+            "type": "url",
+            "value": "https://devpost.com",
+            "name": "Devpost"
+        },
+        {
+            "type": "url",
+            "value": "https://stackoverflow.com",
+            "name": "Stack Overflow"
+        }
+    ]
+}
