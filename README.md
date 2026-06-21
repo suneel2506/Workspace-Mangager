@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🖥️ Workspace Manager
 
 > **Launch predefined workspaces with one command or a voice command.**
@@ -278,3 +279,7 @@ The architecture is designed so you can add these features without restructuring
 ## 📄 License
 
 This project is open source. Use it however you like.
+=======
+# Workspace-Mangager
+Create the workspace when needed.
+>>>>>>> b8a17b4127f702b316ca267cb0f02ad0f80e83b6
