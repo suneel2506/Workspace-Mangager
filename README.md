@@ -1,285 +1,286 @@
-<<<<<<< HEAD
-# 🖥️ Workspace Manager
+# Workspace Automation System v3.0
 
-> **Launch predefined workspaces with one command or a voice command.**
->
-> Say *"Open coding workspace"* and watch VS Code, ChatGPT, and GitHub spring to life — automatically.
+A modular, production-style **personal productivity and automation assistant** built with Python.
 
----
-
-## ✨ Features
-
-| Feature              | Description                                          |
-|----------------------|------------------------------------------------------|
-| **CLI Launch**       | `python main.py coding` launches everything at once  |
-| **Interactive Menu** | Numbered menu when no arguments are given            |
-| **Voice Commands**   | Say "Open coding workspace" hands-free               |
-| **Structured Logs**  | Every launch is timestamped in `logs.txt`             |
-| **Modular Design**   | Easy to extend with GUI, scheduling, AI, and more    |
+Combines **Workspace Management**, **Task Management**, **Voice Commands**, **Automation Tools**, and **AI Assistant Features** into a single desktop application.
 
 ---
 
-## 📁 Project Structure
+## Features
 
+| Feature | Description |
+|---------|-------------|
+| **Workspace Management** | Create, delete, rename, open, and list workspaces with associated apps/URLs |
+| **Task Management** | Add, delete, complete, update tasks with priorities and due dates |
+| **Voice Commands** | Speak commands using Google Speech-to-Text recognition |
+| **App Launcher** | Launch Chrome, VS Code, Notepad, Calculator, and more |
+| **File Automation** | Create/delete folders, move files, organize Downloads by file type |
+| **Browser Automation** | Open URLs, search Google from text or voice |
+| **System Control** | Shutdown, restart, lock screen, sleep monitor |
+| **GUI Dashboard** | Tkinter dashboard with sidebar navigation and stat cards |
+| **AI Assistant** | Future-ready AI integration (local fallback for now) |
+| **Command Logging** | All commands logged to SQLite + `logs/app.log` |
+
+---
+
+## Quick Start
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Launch the GUI dashboard (default)
+python main.py
+
+# Interactive CLI mode
+python main.py --cli
+
+# Voice recognition mode
+python main.py --voice
+
+# Execute a single command
+python main.py --cmd "create workspace IronForge"
+python main.py --cmd "show pending tasks"
+python main.py --cmd "launch chrome"
 ```
+
+---
+
+## Project Structure
+
+```text
 WorkspaceManager/
 │
-├── main.py                  # Entry point — CLI, menu, voice
-├── workspaces.json          # Workspace definitions
-├── logs.txt                 # Auto-generated launch log
-├── requirements.txt         # Python dependencies
-├── README.md                # This file
+├── main.py                     # Entry point: GUI (default), --cli, --voice
 │
 ├── core/
-│   ├── __init__.py
-│   ├── launcher.py          # Opens apps & URLs
-│   ├── workspace_manager.py # Loads & queries workspaces.json
-│   └── logger.py            # Writes logs.txt
+│   ├── __init__.py             # Package exports
+│   ├── assistant.py            # Central orchestrator (ties everything together)
+│   ├── listener.py             # Microphone capture + Google Speech-to-Text
+│   ├── speaker.py              # Text-to-speech output via pyttsx3
+│   ├── command_parser.py       # Expandable rule-based command router
+│   └── ai_manager.py           # Future AI integration stub
 │
-├── voice/
-│   ├── __init__.py
-│   └── speech.py            # Microphone → text → workspace match
+├── automations/
+│   ├── __init__.py             # Package exports
+│   ├── app_launcher.py         # Desktop application launcher
+│   ├── browser_tasks.py        # URL opening + Google search
+│   ├── file_manager.py         # Filesystem operations + organize downloads
+│   └── system_control.py       # Shutdown, restart, lock, sleep
 │
-└── utils/
-    ├── __init__.py
-    └── helpers.py            # Colors, banners, formatting
+├── workspace/
+│   ├── __init__.py             # Package exports
+│   ├── workspace_manager.py    # Workspace CRUD + open/launch
+│   └── task_manager.py         # Task CRUD + filtering + priority
+│
+├── database/
+│   ├── __init__.py             # Package exports
+│   ├── db.py                   # SQLite connection, schema, migration, logging
+│   └── tasks.db                # Auto-created SQLite database
+│
+├── gui/
+│   ├── __init__.py             # Package exports
+│   ├── dashboard.py            # Main window + sidebar + stat cards
+│   ├── workspace_page.py       # Workspace CRUD UI
+│   └── task_page.py            # Task CRUD UI with filtering
+│
+├── config/
+│   ├── __init__.py
+│   └── settings.py             # All configuration constants
+│
+├── utils/
+│   ├── __init__.py
+│   └── helpers.py              # CLI display helpers + ANSI colors
+│
+├── logs/
+│   └── app.log                 # Auto-created log file
+│
+├── assets/                     # Static assets (icons, sounds)
+│
+├── requirements.txt            # Python dependencies
+└── README.md                   # This file
 ```
 
 ---
 
-## 🚀 Installation
+## Database Schema
 
-### Prerequisites
+```sql
+-- Workspaces
+CREATE TABLE workspaces (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    name        TEXT    NOT NULL UNIQUE,
+    path        TEXT    DEFAULT '',
+    created_at  TEXT    DEFAULT (datetime('now', 'localtime'))
+);
 
-- **Python 3.12+** (tested on 3.12, 3.13, 3.14) — [Download](https://www.python.org/downloads/)
-- **pip** — comes with Python
+-- Workspace items (apps + URLs attached to workspaces)
+CREATE TABLE workspace_items (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id  INTEGER NOT NULL,
+    type          TEXT    NOT NULL CHECK(type IN ('app', 'url')),
+    value         TEXT    NOT NULL,
+    name          TEXT    DEFAULT '',
+    FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE
+);
 
-### Step 1 — Clone / Download
+-- Tasks
+CREATE TABLE tasks (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id  INTEGER,
+    title         TEXT    NOT NULL,
+    description   TEXT    DEFAULT '',
+    status        TEXT    DEFAULT 'pending'
+                         CHECK(status IN ('pending', 'in_progress', 'completed')),
+    priority      TEXT    DEFAULT 'medium'
+                         CHECK(priority IN ('low', 'medium', 'high', 'critical')),
+    due_date      TEXT    DEFAULT NULL,
+    created_at    TEXT    DEFAULT (datetime('now', 'localtime')),
+    FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE SET NULL
+);
 
-```bash
-cd "C:\Users\sk600\Documents\WorkSpace Automation\WorkspaceManager"
-```
-
-### Step 2 — Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-> **Note:** `SpeechRecognition`, `sounddevice`, and `scipy` are only needed
-> for voice mode.  If you just want CLI + menu mode, you can skip this step.
-
----
-
-## 🎮 Usage
-
-### 1. Interactive Menu
-
-```bash
-python main.py
-```
-
-Output:
-
-```
-════════════════════════════════════════
-            Workspace Manager
-════════════════════════════════════════
-
-  1. Coding
-  2. College
-  3. Embedded
-  4. Hackathon
-  5. VLSI
-  6. 🎤 Voice Mode
-  7. ❌ Exit
-
-  Select an option:
-```
-
-### 2. Launch by Name (CLI)
-
-```bash
-python main.py coding
-```
-
-Output:
-
-```
-  ℹ  Launching workspace: Coding
-  ────────────────────────────────────────
-  ✔  Launched: VS Code
-  ✔  Launched: ChatGPT
-  ✔  Launched: GitHub
-  ────────────────────────────────────────
-  ✔  Workspace 'Coding' launched successfully!
-```
-
-### 3. Voice Mode
-
-```bash
-python main.py --voice
-```
-
-Say: **"Open coding workspace"**
-
-Output:
-
-```
-  🎤  Listening… Say something like: 'Open coding workspace'
-  …  Adjusted for ambient noise. Speak now!
-
-  📝  You said: "open coding workspace"
-  ✔  Matched workspace: coding
-
-  ℹ  Launching workspace: Coding
-  ────────────────────────────────────────
-  ✔  Launched: VS Code
-  ✔  Launched: ChatGPT
-  ✔  Launched: GitHub
-  ────────────────────────────────────────
-  ✔  Workspace 'Coding' launched successfully!
-```
-
-### 4. List Workspaces
-
-```bash
-python main.py --list
-```
-
-### 5. Help
-
-```bash
-python main.py --help
+-- Command log (recent activity)
+CREATE TABLE command_log (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    command     TEXT    NOT NULL,
+    result      TEXT    DEFAULT '',
+    timestamp   TEXT    DEFAULT (datetime('now', 'localtime'))
+);
 ```
 
 ---
 
-## ⚙️ Configuration
-
-Edit `workspaces.json` to add your own workspaces:
-
-```json
-{
-  "research": [
-    {
-      "type": "app",
-      "path": "C:\\Program Files\\Zotero\\zotero.exe",
-      "name": "Zotero"
-    },
-    {
-      "type": "url",
-      "value": "https://scholar.google.com",
-      "name": "Google Scholar"
-    }
-  ]
-}
-```
-
-### Item Types
-
-| Key      | Type  | Required | Description                              |
-|----------|-------|----------|------------------------------------------|
-| `type`   | `str` | ✅       | `"app"` or `"url"`                       |
-| `path`   | `str` | apps     | Command name or full path to `.exe`      |
-| `value`  | `str` | urls     | The URL to open                          |
-| `name`   | `str` | ❌       | Display name (used in logs and messages) |
-
-### App Path Tips
-
-| App          | Path / Command                                       |
-|--------------|------------------------------------------------------|
-| VS Code      | `code`                                               |
-| Notepad++    | `notepad++`                                          |
-| Chrome       | `"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"` |
-| File Explorer| `explorer`                                           |
-| Terminal     | `wt` (Windows Terminal)                              |
-
----
-
-## 📝 Logs
-
-Every launch is recorded in `logs.txt`:
+## Class Diagram
 
 ```
-[2026-06-20 10:30:15]
-Workspace: coding
-Items:     VS Code, ChatGPT, GitHub
-Status:    Success
-──────────────────────────────
-
-[2026-06-20 10:35:42]
-Workspace: vlsi
-Items:     Nandland, HDLBits
-Status:    Success
-──────────────────────────────
+┌─────────────┐     ┌──────────────┐     ┌──────────────────┐
+│  Assistant   │────▶│ CommandParser│────▶│  ParsedCommand   │
+│              │     │              │     │  (dataclass)     │
+│ process_text │     │ parse()      │     │  intent, args,   │
+│ process_voice│     │ register()   │     │  raw_text, conf. │
+│ start/stop   │     └──────────────┘     └──────────────────┘
+│ voice_loop   │
+└──┬───┬───┬───┘
+   │   │   │
+   ▼   ▼   ▼
+┌──────┐ ┌──────┐ ┌──────┐
+│Listen│ │Speak │ │AI Mgr│
+│er    │ │er    │ │      │
+└──────┘ └──────┘ └──────┘
+   │
+   ▼
+┌──────────────────────────────────────────┐
+│            Action Layer                   │
+├──────────┬────────────┬──────┬───────────┤
+│Workspace │   Task     │ App  │  Browser  │
+│Manager   │  Manager   │Launch│  Tasks    │
+│          │            │er    ├───────────┤
+│          │            │      │ File Mgr  │
+│          │            │      ├───────────┤
+│          │            │      │ Sys Ctrl  │
+└────┬─────┴─────┬──────┴──────┴───────────┘
+     │           │
+     ▼           ▼
+┌─────────┐  ┌────────┐
+│ SQLite  │  │ OS/Net │
+│ (db.py) │  │ APIs   │
+└─────────┘  └────────┘
 ```
 
 ---
 
-## 🎤 Voice Setup Guide
+## Module Responsibilities
 
-### Requirements
-
-1. **A working microphone** connected to your computer.
-2. **Internet connection** -- Google Web Speech API is used.
-3. **SpeechRecognition**, **sounddevice**, and **scipy** installed.
-
-### Supported Commands
-
-| You say…                        | Workspace launched |
-|---------------------------------|--------------------|
-| "Open coding workspace"        | coding             |
-| "Launch embedded"              | embedded           |
-| "Start vlsi workspace"         | vlsi               |
-| "Open college"                 | college            |
-| "Run hackathon workspace"      | hackathon          |
-
-### Tips
-
-- Speak clearly and at a normal pace.
-- Wait for the "Speak now!" prompt before talking.
-- If it doesn't match, it will show what it heard — check for typos.
-- Quiet environments work best.
+| Module | Responsibility |
+|--------|---------------|
+| `main.py` | Entry point — routes to GUI, CLI, or voice mode |
+| `core/assistant.py` | Central orchestrator — ties all subsystems together |
+| `core/listener.py` | Records audio via sounddevice, transcribes via Google STT |
+| `core/speaker.py` | Text-to-speech output using pyttsx3 |
+| `core/command_parser.py` | Rule-based intent matching + argument extraction |
+| `core/ai_manager.py` | Future AI integration (OpenAI, Gemini, local models) |
+| `workspace/workspace_manager.py` | Workspace CRUD + item management + launch |
+| `workspace/task_manager.py` | Task CRUD + status/priority management + filtering |
+| `automations/app_launcher.py` | Launch desktop apps by name or path |
+| `automations/browser_tasks.py` | Open URLs + Google search |
+| `automations/file_manager.py` | Folder CRUD + organize downloads |
+| `automations/system_control.py` | Shutdown, restart, lock, sleep (Windows) |
+| `database/db.py` | SQLite connection, schema DDL, JSON migration, command log |
+| `gui/dashboard.py` | Tkinter main window with sidebar + pages |
+| `gui/workspace_page.py` | Tkinter workspace Treeview + item management |
+| `gui/task_page.py` | Tkinter task Treeview + filtering + CRUD |
+| `config/settings.py` | All configuration: paths, registry, TTS, GUI, commands |
+| `utils/helpers.py` | CLI display helpers (banners, colors, formatting) |
 
 ---
 
-## 🛠️ Error Handling
+## Available Commands
 
-| Scenario                      | What Happens                                      |
-|-------------------------------|---------------------------------------------------|
-| `workspaces.json` missing     | Clear error message with instructions              |
-| Invalid JSON syntax           | Python's JSON parser error is shown                |
-| Workspace not found           | Lists available workspaces                         |
-| App not found on PATH         | Logs the error; other items still launch           |
-| No microphone                 | Graceful message asking to connect one             |
-| Speech not understood         | Asks to try again                                  |
-| No internet (voice)           | Google API error is shown                          |
-| Microphone permission denied  | Clear message pointing to OS privacy settings      |
-| Voice deps not installed      | App works fine without them (CLI + menu still work)|
-
----
-
-## 🔮 Future Expansion Roadmap
-
-The architecture is designed so you can add these features without restructuring:
-
-| Feature                      | Where to Add                            |
-|------------------------------|-----------------------------------------|
-| GUI (CustomTkinter)          | New `gui/` package; import launcher     |
-| AI workspace recommendations | New `ai/` package; analyze usage logs   |
-| Startup automation           | Register with Windows Task Scheduler    |
-| Save current workspace       | Snapshot open apps → write to JSON      |
-| Close workspace              | Track PIDs in launcher; add kill method |
-| Schedule workspace launch    | `--schedule` flag; use `sched` module   |
-| Focus mode                   | Close non-workspace apps before launch  |
+| Command | Example |
+|---------|---------|
+| Create workspace | `"create workspace IronForge"` |
+| Open workspace | `"open workspace IronForge"` |
+| Delete workspace | `"delete workspace IronForge"` |
+| Rename workspace | `"rename workspace OldName to NewName"` |
+| List workspaces | `"list workspaces"` |
+| Add task | `"add task finish authentication"` |
+| Complete task | `"complete task finish authentication"` |
+| Delete task | `"delete task old item"` |
+| Show tasks | `"show pending tasks"` |
+| Launch app | `"launch chrome"`, `"open vscode"` |
+| Google search | `"search Python tutorials"` |
+| Open URL | `"go to github.com"` |
+| Organize downloads | `"organize downloads"` |
+| Create folder | `"create folder C:/Projects/new"` |
+| Lock screen | `"lock screen"` |
+| Shutdown | `"shutdown computer"` |
+| Restart | `"restart computer"` |
+| Help | `"help"` |
 
 ---
 
-## 📄 License
+## Tech Stack
 
-This project is open source. Use it however you like.
-=======
-# Workspace-Mangager
-Create the workspace when needed.
->>>>>>> b8a17b4127f702b316ca267cb0f02ad0f80e83b6
+| Technology | Purpose |
+|-----------|---------|
+| Python 3.12+ | Core language |
+| SQLite | Database (via stdlib `sqlite3`) |
+| Tkinter | GUI framework (stdlib) |
+| SpeechRecognition | Voice-to-text |
+| sounddevice | Microphone audio capture |
+| scipy | WAV file I/O |
+| pyttsx3 | Text-to-speech |
+
+---
+
+## Future-Ready Architecture
+
+The codebase is designed so you can later replace:
+
+| Current | Future | Files to Change |
+|---------|--------|----------------|
+| Tkinter | React / Electron | Only `gui/` directory |
+| SQLite | PostgreSQL / MySQL | Only `database/db.py` |
+| Local AI | OpenAI / Gemini | Only `core/ai_manager.py` |
+| Google STT | Whisper / Vosk | Only `core/listener.py` |
+| pyttsx3 | Cloud TTS | Only `core/speaker.py` |
+| Keyword parser | NLP (spaCy/Rasa) | Only `core/command_parser.py` |
+
+---
+
+## Requirements
+
+```
+SpeechRecognition>=3.11.0
+sounddevice>=0.5.0
+scipy>=1.13.0
+pyttsx3>=2.98
+```
+
+Install with: `pip install -r requirements.txt`
+
+---
+
+## License
+
+Personal project by Suneel Kumar.

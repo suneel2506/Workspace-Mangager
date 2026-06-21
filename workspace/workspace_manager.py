@@ -402,7 +402,7 @@ class WorkspaceManager:
             cursor: sqlite3.Cursor = self.conn.execute(
                 """
                 INSERT INTO workspace_items
-                    (workspace_id, item_type, value, name)
+                    (workspace_id, type, value, name)
                 VALUES (?, ?, ?, ?)
                 """,
                 (workspace_id, item_type.lower(), value.strip(), name.strip()),
@@ -552,7 +552,7 @@ class WorkspaceManager:
         fail_count: int = 0
 
         for item in items:
-            item_type: str = item.get("item_type", "")
+            item_type: str = item.get("type", "")
             value: str = item.get("value", "")
             display_name: str = item.get("name", "") or value
 

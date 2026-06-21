@@ -386,3 +386,68 @@ def migrate_from_json(
         )
     else:
         logger.debug("JSON migration ran but no new workspaces were imported.")
+
+
+# ---------------------------------------------------------------------------
+#  Command Logging
+# ---------------------------------------------------------------------------
+
+
+def log_command(
+    conn: sqlite3.Connection,
+    command: str,
+    result: str = "",
+) -> None:
+    """Insert a row into the ``command_log`` table.
+
+    This is called by the Assistant after every voice or text command
+    so the GUI dashboard can display a "Recent Activity" feed.
+
+    Parameters
+    ----------
+    conn : sqlite3.Connection
+        An open database connection.
+    command : str
+        The raw command text (e.g. ``"create workspace IronForge"``).
+    result : str, optional
+        A short outcome description (e.g. ``"Created workspace id=3"``).
+    """
+    try:
+        conn.execute(
+            "INSERT INTO command_log (command, result) VALUES (?, ?);",
+            (command, result),
+        )
+        conn.commit()
+        logger.debug("Logged command: '%s'", command)
+    except sqlite3.Error as exc:
+        logger.warning("Failed to log command '%s': %s", command, exc)
+
+
+def get_recent_commands(
+    conn: sqlite3.Connection,
+    limit: int = 20,
+) -> list[dict]:
+    """Return the most recent entries from ``command_log``.
+
+    Parameters
+    ----------
+    conn : sqlite3.Connection
+        An open database connection.
+    limit : int, optional
+        Maximum number of rows to return.  Defaults to 20.
+
+    Returns
+    -------
+    list[dict]
+        Each dict has keys ``id``, ``command``, ``result``, ``timestamp``.
+    """
+    try:
+        rows = conn.execute(
+            "SELECT * FROM command_log ORDER BY id DESC LIMIT ?;",
+            (limit,),
+        ).fetchall()
+        return [dict(r) for r in rows]
+    except sqlite3.Error as exc:
+        logger.warning("Failed to fetch recent commands: %s", exc)
+        return []
+

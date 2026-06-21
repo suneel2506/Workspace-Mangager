@@ -1,54 +1,49 @@
 """
 ============================================================
-  main.py — Workspace Manager Entry Point
+  main.py — Workspace Automation System Entry Point
 ============================================================
 
 USAGE:
-    # 1) Launch a workspace directly from the command line:
-    python main.py coding
-
-    # 2) Open the interactive menu:
+    # 1) Launch the GUI dashboard (default):
     python main.py
 
-    # 3) Start voice mode directly:
+    # 2) Open the interactive CLI menu:
+    python main.py --cli
+
+    # 3) Start voice-only mode:
     python main.py --voice
 
-DESCRIPTION:
-    This is the single entry point for the entire application.
-    It parses command-line arguments and delegates to the
-    appropriate module:
+    # 4) Execute a single text command:
+    python main.py --cmd "create workspace IronForge"
 
-        ┌──────────────┐
-        │   main.py    │
-        └──┬───┬───┬───┘
-           │   │   │
-           ▼   ▼   ▼
-        CLI  Menu  Voice
-           │   │   │
-           ▼   ▼   ▼
-        ┌──────────────┐
-        │  Launcher    │  ← opens apps & URLs
-        └──────────────┘
-           │
-           ▼
-        ┌──────────────┐
-        │   Logger     │  ← writes logs.txt
-        └──────────────┘
+    # 5) Show help:
+    python main.py --help
 
-FUTURE HOOKS:
-    • --gui flag to launch a CustomTkinter window.
-    • --schedule flag for timed workspace launches.
-    • --close flag to terminate a running workspace.
-    • --add / --remove flags to edit workspaces.json from CLI.
+ARCHITECTURE:
+    This module is the single entry point that:
+      1. Initialises logging and the database schema.
+      2. Creates the central ``Assistant`` instance.
+      3. Routes to GUI, CLI, or voice mode based on flags.
+
+    ┌──────────────┐
+    │   main.py    │
+    └──┬───┬───┬───┘
+       │   │   │
+       ▼   ▼   ▼
+     GUI  CLI  Voice
+       │   │   │
+       ▼   ▼   ▼
+    ┌──────────────┐
+    │  Assistant   │  ← central orchestrator
+    └──────────────┘
 ============================================================
 """
 
 import sys
 
-from core.workspace_manager import WorkspaceManager
-from core.launcher import Launcher
-from core.logger import Logger
-from voice.speech import VoiceController
+from config.settings import setup_logging, APP_NAME, APP_VERSION
+from database.db import init_db
+
 from utils.helpers import (
     print_banner,
     print_divider,
@@ -61,152 +56,147 @@ from utils.helpers import (
 )
 
 
-# ── Shared instances (created once, reused everywhere) ─────
-logger = Logger()
-workspace_mgr = WorkspaceManager()
-launcher = Launcher(logger=logger)
+# ===========================================================
+#  Initialization
+# ===========================================================
+
+def _init() -> None:
+    """Run one-time startup tasks: logging + database."""
+    setup_logging()
+    init_db()
 
 
 # ===========================================================
-#  CLI MODE — python main.py <workspace_name>
+#  GUI MODE — python main.py (default)
 # ===========================================================
-def launch_workspace_by_name(name: str) -> None:
-    """
-    Look up a workspace by name and launch all its items.
 
-    Parameters
-    ----------
-    name : str
-        Workspace name (case-insensitive).
-    """
-    try:
-        items = workspace_mgr.get_workspace(name)
-    except KeyError as exc:
-        print_error(str(exc))
-        return
+def gui_mode() -> None:
+    """Launch the Tkinter dashboard."""
+    from core.assistant import Assistant
+    from gui.dashboard import Dashboard
 
-    display: str = format_workspace_name(name)
-    print()
-    print_info(f"Launching workspace: {display}")
-    print_divider()
+    print_info(f"Starting {APP_NAME} v{APP_VERSION} — GUI Mode")
 
-    success: bool = launcher.launch(name, items)
-
-    print_divider()
-    if success:
-        print_success(f"Workspace '{display}' launched successfully!")
-    else:
-        print_warning(f"Workspace '{display}' launched with errors. Check logs.txt.")
-    print()
+    assistant = Assistant()
+    dashboard = Dashboard(assistant)
+    dashboard.run()
 
 
 # ===========================================================
-#  VOICE MODE — listen → match → launch
+#  CLI MODE — python main.py --cli
 # ===========================================================
-def voice_mode() -> None:
-    """
-    Enter voice recognition mode.  Loops until the user says
-    a valid workspace name or decides to quit.
-    """
-    print_info("Entering Voice Mode")
-    print_info("Say 'Open <workspace> workspace' or 'quit' to exit.\n")
 
-    vc = VoiceController(
-        workspace_names=workspace_mgr.list_workspaces(),
-        logger=logger,
-    )
+def cli_mode() -> None:
+    """Run the interactive command-line interface."""
+    from core.assistant import Assistant
+
+    assistant = Assistant()
+
+    print_banner()
+    print_info(f"{APP_NAME} v{APP_VERSION} — CLI Mode")
+    print_info("Type 'help' for available commands, or 'quit' to exit.\n")
 
     while True:
-        name = vc.listen_for_workspace()
-
-        if name:
-            launch_workspace_by_name(name)
-            # Ask if the user wants to continue listening.
-            again: str = input("  Listen again? [y/N]: ").strip().lower()
-            if again not in ("y", "yes"):
-                break
-        else:
-            retry: str = input("  Try again? [y/N]: ").strip().lower()
-            if retry not in ("y", "yes"):
-                break
-
-    print_info("Exiting Voice Mode.\n")
-
-
-# ===========================================================
-#  INTERACTIVE MENU — python main.py (no arguments)
-# ===========================================================
-def interactive_menu() -> None:
-    """
-    Display a numbered menu of all workspaces + Voice Mode
-    and wait for the user to choose.
-    """
-    while True:
-        print_banner()
-
-        workspaces: list[str] = workspace_mgr.list_workspaces()
-
-        # Build the numbered list.
-        for i, ws_name in enumerate(workspaces, start=1):
-            display: str = format_workspace_name(ws_name)
-            print(f"  {Colors.CYAN}{i}.{Colors.RESET} {display}")
-
-        # Extra options after the workspace list.
-        voice_option: int = len(workspaces) + 1
-        exit_option: int = voice_option + 1
-
-        print(f"  {Colors.MAGENTA}{voice_option}.{Colors.RESET} Voice Mode")
-        print(f"  {Colors.RED}{exit_option}.{Colors.RESET} Exit")
-        print()
-
-        # Get user choice.
         try:
-            choice_str: str = input(f"  {Colors.BOLD}Select an option: {Colors.RESET}").strip()
-            if not choice_str:
-                continue
-
-            choice: int = int(choice_str)
-
-        except ValueError:
-            print_error("Please enter a number.\n")
-            continue
-
-        # Route the choice.
-        if 1 <= choice <= len(workspaces):
-            selected: str = workspaces[choice - 1]
-            launch_workspace_by_name(selected)
-
-        elif choice == voice_option:
-            voice_mode()
-
-        elif choice == exit_option:
-            print_info("Goodbye!\n")
+            user_input = input(f"  {Colors.BOLD}> {Colors.RESET}").strip()
+        except (EOFError, KeyboardInterrupt):
+            print()
+            print_info("Goodbye!")
             break
 
-        else:
-            print_error(f"Invalid option. Choose 1–{exit_option}.\n")
+        if not user_input:
+            continue
+
+        if user_input.lower() in ("quit", "exit", "q"):
+            print_info("Goodbye!")
+            break
+
+        # Process the command through the assistant.
+        response = assistant.process_text(user_input)
+        print()
+        print(f"  {response}")
+        print()
+
+
+# ===========================================================
+#  VOICE MODE — python main.py --voice
+# ===========================================================
+
+def voice_mode() -> None:
+    """Run continuous voice recognition mode."""
+    from core.assistant import Assistant
+
+    assistant = Assistant()
+
+    print_banner()
+    print_info(f"{APP_NAME} v{APP_VERSION} — Voice Mode")
+    print_info("Say a command or 'quit' to exit.\n")
+
+    if not assistant.listener.is_available():
+        print_error("Voice dependencies are not installed.")
+        print_error("Run: pip install SpeechRecognition sounddevice scipy")
+        return
+
+    while True:
+        response = assistant.process_voice()
+
+        if response:
+            print()
+            print(f"  {response}")
+            print()
+
+            # Speak the response.
+            assistant.speaker.say(response, block=True)
+
+        # Ask if user wants to continue.
+        try:
+            again = input(f"  {Colors.DIM}Listen again? [Y/n]: {Colors.RESET}").strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            break
+
+        if again in ("n", "no", "quit", "exit"):
+            break
+
+    print_info("Exiting Voice Mode.")
+
+
+# ===========================================================
+#  SINGLE COMMAND — python main.py --cmd "..."
+# ===========================================================
+
+def single_command(text: str) -> None:
+    """Execute a single text command and exit."""
+    from core.assistant import Assistant
+
+    assistant = Assistant()
+    response = assistant.process_text(text)
+    print(response)
 
 
 # ===========================================================
 #  ENTRY POINT
 # ===========================================================
+
 def main() -> None:
     """
     Parse ``sys.argv`` and decide which mode to run.
 
     Modes
     -----
-    ``python main.py``             → interactive menu
-    ``python main.py coding``      → launch "coding" workspace
-    ``python main.py --voice``     → voice recognition mode
-    ``python main.py --list``      → print all workspaces
-    ``python main.py --help``      → usage instructions
+    ``python main.py``                 → GUI dashboard
+    ``python main.py --cli``           → interactive CLI
+    ``python main.py --voice``         → voice recognition mode
+    ``python main.py --cmd "..."``     → single text command
+    ``python main.py --help``          → usage instructions
     """
+    # Always run init first.
+    _init()
+
     args: list[str] = sys.argv[1:]
 
-    # No arguments → interactive menu.
+    # No arguments → GUI mode (default).
     if not args:
-        interactive_menu()
+        gui_mode()
         return
 
     first_arg: str = args[0].lower()
@@ -216,41 +206,60 @@ def main() -> None:
         _print_usage()
         return
 
+    if first_arg in ("--cli", "-c"):
+        cli_mode()
+        return
+
     if first_arg in ("--voice", "-v"):
-        print_banner()
         voice_mode()
         return
 
-    if first_arg in ("--list", "-l"):
-        print_banner()
-        print_info("Available workspaces:\n")
-        for ws in workspace_mgr.list_workspaces():
-            print(f"    • {format_workspace_name(ws)}")
-        print()
+    if first_arg in ("--cmd",) and len(args) > 1:
+        single_command(" ".join(args[1:]))
         return
 
-    # ── Positional argument → workspace name ───────────────
-    launch_workspace_by_name(first_arg)
+    # ── Legacy: treat positional argument as a command ─────
+    single_command(" ".join(args))
 
 
 def _print_usage() -> None:
     """Print help text."""
     print(
-        """
-Usage: python main.py [OPTION | WORKSPACE_NAME]
+        f"""
+{APP_NAME} v{APP_VERSION}
+{'=' * 50}
+
+Usage: python main.py [OPTION]
 
 Options:
-  (no argument)      Open the interactive menu
-  <workspace_name>   Launch a workspace by name (e.g., 'coding')
-  --voice, -v        Start voice recognition mode
-  --list,  -l        List all available workspaces
-  --help,  -h        Show this help message
+  (no argument)              Launch the GUI dashboard
+  --cli,   -c                Open interactive CLI mode
+  --voice, -v                Start voice recognition mode
+  --cmd "command text"       Execute a single command and exit
+  --help,  -h                Show this help message
 
 Examples:
-  python main.py                 # interactive menu
-  python main.py coding          # launch 'coding' workspace
-  python main.py --voice         # voice mode
-  python main.py --list          # list workspaces
+  python main.py                           # GUI dashboard
+  python main.py --cli                     # interactive CLI
+  python main.py --voice                   # voice mode
+  python main.py --cmd "create workspace IronForge"
+  python main.py --cmd "show pending tasks"
+  python main.py --cmd "launch chrome"
+
+Available Voice / CLI Commands:
+  create workspace <name>      Create a new workspace
+  open workspace <name>        Launch all workspace items
+  delete workspace <name>      Delete a workspace
+  list workspaces              Show all workspaces
+  add task <title>             Add a new task
+  show tasks                   List pending tasks
+  complete task <title>        Mark a task as done
+  launch <app>                 Open an application
+  search <query>               Google search
+  go to <url>                  Open a URL
+  organize downloads           Sort Downloads folder
+  shutdown / restart / lock    System controls
+  help                         Show available commands
 """
     )
 

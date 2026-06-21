@@ -59,7 +59,7 @@ LEGACY_JSON: Path = PROJECT_ROOT / "workspaces.json"
 APP_NAME: str = "Workspace Automation System"
 """Human-readable name shown in window titles, logs, and dialogs."""
 
-APP_VERSION: str = "2.0.0"
+APP_VERSION: str = "3.0.0"
 """Semantic version string.  Bump this when you ship a release."""
 
 DEFAULT_BROWSER: str | None = None
@@ -206,3 +206,113 @@ def setup_logging() -> logging.Logger:
     logger.addHandler(console_handler)
 
     return logger
+
+
+# ---------------------------------------------------------------------------
+#  Text-to-Speech (TTS) Settings
+# ---------------------------------------------------------------------------
+
+TTS_RATE: int = 160
+"""Words-per-minute for pyttsx3.  150–180 is a natural range."""
+
+TTS_VOLUME: float = 0.9
+"""Volume level from 0.0 (silent) to 1.0 (maximum)."""
+
+TTS_VOICE_ID: str | None = None
+"""
+Explicit voice identifier for pyttsx3.
+``None`` means "use the system default voice".
+Set to a specific voice ID string if you want a particular voice.
+Find available voices with:  ``pyttsx3.init().getProperty('voices')``
+"""
+
+# ---------------------------------------------------------------------------
+#  GUI Settings
+# ---------------------------------------------------------------------------
+
+GUI_WINDOW_TITLE: str = f"{APP_NAME} v{APP_VERSION}"
+"""Text shown in the Tkinter title bar."""
+
+GUI_WINDOW_SIZE: str = "1100x700"
+"""Default window geometry (WIDTHxHEIGHT)."""
+
+GUI_MIN_WIDTH: int = 900
+"""Minimum resizable width in pixels."""
+
+GUI_MIN_HEIGHT: int = 600
+"""Minimum resizable height in pixels."""
+
+# Color palette for the Tkinter dashboard theme.
+GUI_COLORS: dict[str, str] = {
+    "sidebar_bg":      "#1e1e2e",     # Dark navy sidebar
+    "sidebar_fg":      "#cdd6f4",     # Light text on sidebar
+    "sidebar_active":  "#313244",     # Hovered/active sidebar item
+    "sidebar_accent":  "#89b4fa",     # Accent highlights (blue)
+    "content_bg":      "#f5f5f7",     # Light grey content area
+    "card_bg":         "#ffffff",     # White stat cards
+    "card_border":     "#e0e0e0",     # Card border color
+    "text_primary":    "#1e1e2e",     # Dark text on light background
+    "text_secondary":  "#6c757d",     # Muted secondary text
+    "accent_green":    "#a6e3a1",     # Success / completed
+    "accent_red":      "#f38ba8",     # Error / critical
+    "accent_yellow":   "#f9e2af",     # Warning / pending
+    "accent_blue":     "#89b4fa",     # Info / in-progress
+    "btn_primary":     "#89b4fa",     # Primary button background
+    "btn_danger":      "#f38ba8",     # Danger button background
+}
+
+# ---------------------------------------------------------------------------
+#  Command Parser Keywords
+# ---------------------------------------------------------------------------
+# Maps intent names to lists of trigger keywords / phrases.
+# Used by ``core.command_parser.CommandParser`` to match user input.
+
+COMMAND_PATTERNS: dict[str, list[str]] = {
+    "create_workspace":    ["create workspace", "new workspace", "make workspace"],
+    "open_workspace":      ["open workspace", "launch workspace", "start workspace"],
+    "delete_workspace":    ["delete workspace", "remove workspace"],
+    "rename_workspace":    ["rename workspace"],
+    "list_workspaces":     ["list workspaces", "show workspaces", "all workspaces"],
+    "add_task":            ["add task", "new task", "create task"],
+    "complete_task":       ["complete task", "finish task", "done task", "mark task"],
+    "delete_task":         ["delete task", "remove task"],
+    "show_tasks":          ["show tasks", "list tasks", "pending tasks", "my tasks"],
+    "launch_app":          ["launch", "open app", "start app", "run app"],
+    "search_google":       ["search", "google", "look up", "search for"],
+    "open_url":            ["open url", "go to", "visit", "browse"],
+    "organize_downloads":  ["organize downloads", "clean downloads", "sort downloads"],
+    "create_folder":       ["create folder", "new folder", "make folder"],
+    "shutdown":            ["shutdown", "shut down", "power off"],
+    "restart":             ["restart", "reboot"],
+    "lock_screen":         ["lock screen", "lock computer", "lock"],
+    "help":                ["help", "what can you do", "commands"],
+}
+
+# ---------------------------------------------------------------------------
+#  File Category Reverse Lookup
+# ---------------------------------------------------------------------------
+
+
+def get_category_for_extension(ext: str) -> str:
+    """Return the category name for a given file extension.
+
+    Scans ``FILE_CATEGORIES`` (which maps category names to lists of
+    extensions) and returns the first matching category.  Falls back
+    to ``"Other"`` if no match is found.
+
+    Parameters
+    ----------
+    ext : str
+        File extension including the dot, e.g. ``".pdf"``.
+
+    Returns
+    -------
+    str
+        Category name, e.g. ``"Documents"`` or ``"Other"``.
+    """
+    ext_lower: str = ext.lower()
+    for category, extensions in FILE_CATEGORIES.items():
+        if ext_lower in extensions:
+            return category
+    return "Other"
+

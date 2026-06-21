@@ -43,7 +43,7 @@ import logging
 import shutil
 from pathlib import Path
 
-from config.settings import DOWNLOADS_DIR, FILE_CATEGORIES
+from config.settings import DOWNLOADS_DIR, FILE_CATEGORIES, get_category_for_extension
 
 
 # ── Module-level logger ────────────────────────────────────
@@ -276,7 +276,7 @@ class FileManager:
 
             # Determine the target category from the file extension.
             extension: str = item.suffix.lower()  # e.g. ".PDF" -> ".pdf"
-            category: str = FILE_CATEGORIES.get(extension, "Other")
+            category: str = get_category_for_extension(extension)
 
             # Create the category subfolder if it doesn't exist yet.
             category_folder: Path = downloads / category
