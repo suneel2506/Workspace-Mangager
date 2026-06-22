@@ -173,6 +173,42 @@ def single_command(text: str) -> None:
     print(response)
 
 
+
+def wakeword_mode() -> None:
+    """
+    Run MAJA as a background wake-word assistant.
+    """
+
+    from core.assistant import Assistant
+    from wakeword import listen_for_wakeword
+
+    assistant = Assistant()
+
+    print_info("MAJA Wake Word Mode Started")
+    print_info("Say 'MAJA' followed by a command. Press Ctrl+C to exit.\n")
+
+    try:
+        while True:
+            if listen_for_wakeword():
+                print_success("Wake word detected!")
+
+                assistant.speaker.say(
+                    "Yes boss",
+                    block=True
+                )
+
+                response = assistant.process_voice()
+
+                if response:
+                    print(f"  {response}")
+
+                    assistant.speaker.say(
+                        response,
+                        block=True
+                    )
+    except KeyboardInterrupt:
+        print()
+        print_info("Exiting Wake Word Mode.")
 # ===========================================================
 #  ENTRY POINT
 # ===========================================================
@@ -217,6 +253,10 @@ def main() -> None:
     if first_arg in ("--cmd",) and len(args) > 1:
         single_command(" ".join(args[1:]))
         return
+    
+    if first_arg in ("--wake", "-w"):
+        wakeword_mode()
+        return
 
     # ── Legacy: treat positional argument as a command ─────
     single_command(" ".join(args))
@@ -235,6 +275,7 @@ Options:
   (no argument)              Launch the GUI dashboard
   --cli,   -c                Open interactive CLI mode
   --voice, -v                Start voice recognition mode
+  --wake,  -w                Start MAJA wake word mode
   --cmd "command text"       Execute a single command and exit
   --help,  -h                Show this help message
 
@@ -242,6 +283,7 @@ Examples:
   python main.py                           # GUI dashboard
   python main.py --cli                     # interactive CLI
   python main.py --voice                   # voice mode
+  python main.py --wake                    # MAJA wake word mode
   python main.py --cmd "create workspace IronForge"
   python main.py --cmd "show pending tasks"
   python main.py --cmd "launch chrome"

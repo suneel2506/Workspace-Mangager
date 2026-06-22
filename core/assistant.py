@@ -150,6 +150,24 @@ class Assistant:
 
         _log.info("Assistant initialised successfully.")
 
+    def open_dashboard(self) -> str:
+        """
+        Open the GUI dashboard in a separate thread.
+        """
+
+        def launch_dashboard():
+            from gui.dashboard import Dashboard
+
+            dashboard = Dashboard(self)
+            dashboard.run()
+
+        threading.Thread(
+            target=launch_dashboard,
+            daemon=True
+        ).start()
+
+        return "Opening dashboard."
+
     # ===========================================================
     #  Observable Interface
     # ===========================================================
@@ -344,7 +362,9 @@ class Assistant:
             return self._handle_organize_downloads()
         if intent == "create_folder":
             return self._handle_create_folder(args)
-
+        if intent == "open_dashboard":
+            return self.open_dashboard()
+            
         # ── System commands ────────────────────────────────
         if intent == "shutdown":
             return self._handle_shutdown()

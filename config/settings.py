@@ -270,6 +270,7 @@ GUI_COLORS: dict[str, str] = {
 COMMAND_PATTERNS: dict[str, list[str]] = {
     "create_workspace":    ["create workspace", "new workspace", "make workspace"],
     "open_workspace":      ["open workspace", "launch workspace", "start workspace"],
+    "open_dashboard":      ["open dashboard", "show dashboard", "launch dashboard"],
     "delete_workspace":    ["delete workspace", "remove workspace"],
     "rename_workspace":    ["rename workspace"],
     "list_workspaces":     ["list workspaces", "show workspaces", "all workspaces"],

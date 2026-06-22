@@ -225,6 +225,7 @@ _DEFAULT_EXTRACTORS: dict[str, Callable[[str, str], dict[str, Any]]] = {
     "open_url":           _extract_url,
     "organize_downloads": _no_args,
     "create_folder":      _extract_folder_path,
+    "open_dashboard":     _no_args,
     "shutdown":           _no_args,
     "restart":            _no_args,
     "lock_screen":        _no_args,
