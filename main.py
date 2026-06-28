@@ -210,6 +210,31 @@ def wakeword_mode() -> None:
         print()
         print_info("Exiting Wake Word Mode.")
 # ===========================================================
+#  OVERLAY MODE (Voice-Controlled Floating Widget)
+# ===========================================================
+
+def overlay_mode() -> None:
+    """
+    Launch the voice-controlled floating overlay.
+
+    Displays a tiny floating microphone button (always-on-top).
+    The dashboard does NOT open — only the overlay appears.
+    Say 'Open Dashboard' to launch the dashboard via voice.
+    """
+    print_info(f"{APP_NAME} v{APP_VERSION} — Overlay Mode")
+    print("  [*] Starting voice overlay...")
+
+    try:
+        from voice.overlay import VoiceOverlay
+        overlay = VoiceOverlay()
+        overlay.run()
+    except ImportError as exc:
+        print(f"  [✗] Could not import voice overlay: {exc}")
+        print("      Run: pip install vosk rapidfuzz keyboard Pillow")
+    except Exception as exc:
+        print(f"  [✗] Overlay error: {exc}")
+
+# ===========================================================
 #  ENTRY POINT
 # ===========================================================
 
@@ -258,6 +283,10 @@ def main() -> None:
         wakeword_mode()
         return
 
+    if first_arg in ("--overlay", "-o"):
+        overlay_mode()
+        return
+
     # ── Legacy: treat positional argument as a command ─────
     single_command(" ".join(args))
 
@@ -273,17 +302,19 @@ Usage: python main.py [OPTION]
 
 Options:
   (no argument)              Launch the GUI dashboard
-  --cli,   -c                Open interactive CLI mode
-  --voice, -v                Start voice recognition mode
-  --wake,  -w                Start MAJA wake word mode
+  --cli,     -c              Open interactive CLI mode
+  --voice,   -v              Start voice recognition mode
+  --wake,    -w              Start MAJA wake word mode
+  --overlay, -o              Start voice overlay (floating mic)
   --cmd "command text"       Execute a single command and exit
-  --help,  -h                Show this help message
+  --help,    -h              Show this help message
 
 Examples:
   python main.py                           # GUI dashboard
   python main.py --cli                     # interactive CLI
   python main.py --voice                   # voice mode
   python main.py --wake                    # MAJA wake word mode
+  python main.py --overlay                 # floating mic overlay
   python main.py --cmd "create workspace IronForge"
   python main.py --cmd "show pending tasks"
   python main.py --cmd "launch chrome"

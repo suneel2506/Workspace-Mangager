@@ -49,7 +49,7 @@ import os
 import tempfile
 
 # Wake word constant
-WAKE_WORD: str = "maja"
+WAKE_WORD: str = "hey bro "
 
 
 def listen_for_wakeword() -> bool:

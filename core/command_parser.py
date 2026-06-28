@@ -230,6 +230,15 @@ _DEFAULT_EXTRACTORS: dict[str, Callable[[str, str], dict[str, Any]]] = {
     "restart":            _no_args,
     "lock_screen":        _no_args,
     "help":               _no_args,
+    # ── Voice overlay additions ────────────────────────────
+    "close_dashboard":    _no_args,
+    "hide_dashboard":     _no_args,
+    "show_dashboard":     _no_args,
+    "exit_workspace":     _no_args,
+    "restart_workspace":  _no_args,
+    "sleep_computer":     _no_args,
+    "search_youtube":     _extract_search_query,
+    "open_chatgpt":       _no_args,
 }
 
 

@@ -148,22 +148,50 @@ class Assistant:
         self._on_status: list[Callable[[str], None]] = []
         self._on_response: list[Callable[[str], None]] = []
 
+        # ── Dashboard singleton tracking ───────────────────
+        self._dashboard_ref: Any = None
+        self._dashboard_lock: threading.Lock = threading.Lock()
+
         _log.info("Assistant initialised successfully.")
 
     def open_dashboard(self) -> str:
         """
-        Open the GUI dashboard in a separate thread.
+        Open or focus the singleton GUI dashboard.
+
+        If the dashboard is already open, bring it to the front
+        and restore from minimized state.  Never creates duplicate
+        dashboard windows.
         """
+        with self._dashboard_lock:
+            # Check if a dashboard is already running.
+            if self._dashboard_ref is not None:
+                try:
+                    root = self._dashboard_ref.root
+                    if root.winfo_exists():
+                        root.deiconify()       # Restore if minimized.
+                        root.lift()            # Bring to front.
+                        root.focus_force()     # Focus.
+                        _log.info("Dashboard already open — brought to front.")
+                        return "Dashboard is already open."
+                except Exception:
+                    # Reference stale — clear it and fall through.
+                    self._dashboard_ref = None
 
         def launch_dashboard():
             from gui.dashboard import Dashboard
 
             dashboard = Dashboard(self)
+            with self._dashboard_lock:
+                self._dashboard_ref = dashboard
             dashboard.run()
+            # After mainloop exits, clear the reference.
+            with self._dashboard_lock:
+                self._dashboard_ref = None
 
         threading.Thread(
             target=launch_dashboard,
-            daemon=True
+            daemon=True,
+            name="DashboardThread",
         ).start()
 
         return "Opening dashboard."
@@ -377,6 +405,24 @@ class Assistant:
         if intent == "help":
             return self.parser.get_help_text()
 
+        # ── Voice overlay commands ─────────────────────────
+        if intent == "close_dashboard":
+            return self._handle_close_dashboard()
+        if intent == "hide_dashboard":
+            return self._handle_hide_dashboard()
+        if intent == "show_dashboard":
+            return self.open_dashboard()
+        if intent == "exit_workspace":
+            return self._handle_exit_workspace()
+        if intent == "restart_workspace":
+            return self._handle_restart_workspace()
+        if intent == "sleep_computer":
+            return self._handle_sleep_computer()
+        if intent == "search_youtube":
+            return self._handle_search_youtube(args)
+        if intent == "open_chatgpt":
+            return self._handle_open_chatgpt()
+
         return f"I understood the command '{intent}' but don't know how to handle it yet."
 
     # ===========================================================
@@ -538,3 +584,86 @@ class Assistant:
         if success:
             return "Screen locked."
         return "Could not lock the screen.  This feature is Windows-only."
+
+    # ── Voice Overlay Handlers (additive) ──────────────────
+
+    def _handle_close_dashboard(self) -> str:
+        """Close the dashboard window if it is open."""
+        with self._dashboard_lock:
+            if self._dashboard_ref is not None:
+                try:
+                    self._dashboard_ref.root.after(
+                        0, self._dashboard_ref.root.destroy
+                    )
+                    self._dashboard_ref = None
+                    _log.info("Dashboard closed via voice command.")
+                    return "Dashboard closed."
+                except Exception as exc:
+                    _log.error("Error closing dashboard: %s", exc)
+                    self._dashboard_ref = None
+            return "Dashboard is not open."
+
+    def _handle_hide_dashboard(self) -> str:
+        """Hide (minimize) the dashboard window."""
+        with self._dashboard_lock:
+            if self._dashboard_ref is not None:
+                try:
+                    self._dashboard_ref.root.after(
+                        0, self._dashboard_ref.root.withdraw
+                    )
+                    return "Dashboard hidden."
+                except Exception:
+                    pass
+            return "Dashboard is not open."
+
+    def _handle_exit_workspace(self) -> str:
+        """Exit the workspace assistant entirely."""
+        import os
+        _log.info("Exit workspace requested.")
+        threading.Timer(1.5, lambda: os._exit(0)).start()
+        return "Goodbye! Exiting workspace assistant."
+
+    def _handle_restart_workspace(self) -> str:
+        """Restart the workspace assistant."""
+        import os
+        import sys
+        _log.info("Restart workspace requested.")
+        def _do_restart() -> None:
+            python = sys.executable
+            os.execl(python, python, *sys.argv)
+        threading.Timer(1.5, _do_restart).start()
+        return "Restarting workspace assistant..."
+
+    def _handle_sleep_computer(self) -> str:
+        """Put the computer to sleep."""
+        import subprocess
+        _log.info("Sleep computer requested.")
+        try:
+            subprocess.run(
+                "rundll32.exe powrprof.dll,SetSuspendState 0,1,0",
+                shell=True,
+                capture_output=True,
+                timeout=10,
+            )
+            return "Computer going to sleep."
+        except Exception as exc:
+            _log.error("Sleep failed: %s", exc)
+            return f"Could not put computer to sleep: {exc}"
+
+    def _handle_search_youtube(self, args: dict[str, Any]) -> str:
+        """Search YouTube for a query."""
+        import urllib.parse
+        import webbrowser
+        query = args.get("query", "")
+        if not query:
+            return "What would you like to search on YouTube?"
+        encoded = urllib.parse.quote_plus(query)
+        url = f"https://www.youtube.com/results?search_query={encoded}"
+        webbrowser.open(url)
+        return f"Searching YouTube for '{query}'."
+
+    def _handle_open_chatgpt(self) -> str:
+        """Open ChatGPT in the default browser."""
+        import webbrowser
+        webbrowser.open("https://chat.openai.com")
+        return "Opening ChatGPT."

@@ -31,10 +31,25 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 #  Project Paths
 # ---------------------------------------------------------------------------
-# ``Path(__file__).resolve()`` gives the absolute path of *this* file.
-# ``.parent`` twice climbs from  config/settings.py  ->  config/  ->  project root.
+# When running as a PyInstaller-packaged EXE, __file__ resolves to a path
+# inside the temporary extraction folder (_MEIxxxxxx), NOT the folder where
+# the EXE lives.  Using __file__ therefore causes all data files (database,
+# logs, JSON) to be created in a throwaway temp directory instead of next
+# to the EXE -- which is why the packaged app always sees an empty workspace.
+#
+# Fix: detect the frozen (EXE) case with ``sys.frozen`` and derive
+# PROJECT_ROOT from ``sys.executable`` (the actual EXE on disk) instead.
+# When running normally with ``python main.py`` the fallback to __file__
+# preserves the original behaviour exactly.
 
-PROJECT_ROOT: Path = Path(__file__).resolve().parent.parent
+if getattr(sys, "frozen", False):
+    # Running as a PyInstaller-compiled EXE.
+    # sys.executable  ->  e.g. C:\WorkspaceManager\dist\main.exe
+    # .parent          ->  C:\WorkspaceManager\dist\
+    PROJECT_ROOT: Path = Path(sys.executable).resolve().parent
+else:
+    # Running as plain Python: climb from config/settings.py -> config/ -> root.
+    PROJECT_ROOT: Path = Path(__file__).resolve().parent.parent
 """Absolute path to the top-level WorkspaceManager directory."""
 
 DB_PATH: Path = PROJECT_ROOT / "database" / "tasks.db"
@@ -48,6 +63,12 @@ LOG_FILE: Path = LOG_DIR / "app.log"
 
 ASSETS_DIR: Path = PROJECT_ROOT / "assets"
 """Static assets (icons, images, sounds) used by the GUI or TTS."""
+
+VOICE_SETTINGS_FILE: Path = PROJECT_ROOT / "voice_settings.json"
+"""JSON file storing voice assistant preferences."""
+
+VOSK_MODEL_DIR: Path = ASSETS_DIR / "vosk-model"
+"""Directory for downloaded Vosk speech recognition models."""
 
 LEGACY_JSON: Path = PROJECT_ROOT / "workspaces.json"
 """Path to the old JSON file used before the SQLite migration."""
@@ -107,6 +128,11 @@ APP_REGISTRY: dict[str, str] = {
     "terminal":     "wt",          # Windows Terminal
     "cmd":          "cmd",
     "powershell":   "powershell",
+    # ── Voice overlay additions ────────────────────────────
+    "spotify":      "spotify",
+    "discord":      "discord",
+    "steam":        "steam",
+    "notes":        "notepad",     # Windows Sticky Notes fallback
 }
 
 # ---------------------------------------------------------------------------
@@ -287,6 +313,15 @@ COMMAND_PATTERNS: dict[str, list[str]] = {
     "restart":             ["restart", "reboot"],
     "lock_screen":         ["lock screen", "lock computer", "lock"],
     "help":                ["help", "what can you do", "commands"],
+    # ── Voice overlay additions ────────────────────────────
+    "close_dashboard":     ["close dashboard", "exit dashboard"],
+    "hide_dashboard":      ["hide dashboard", "minimize dashboard"],
+    "show_dashboard":      ["show dashboard", "display dashboard"],
+    "exit_workspace":      ["exit workspace", "quit workspace"],
+    "restart_workspace":   ["restart workspace", "reload workspace"],
+    "sleep_computer":      ["sleep computer", "sleep mode"],
+    "search_youtube":      ["search youtube for", "youtube search"],
+    "open_chatgpt":        ["open chatgpt", "launch chatgpt"],
 }
 
 # ---------------------------------------------------------------------------

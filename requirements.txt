@@ -23,3 +23,26 @@ scipy>=1.13.0
 # Text-to-speech engine -- optional, for future voice feedback
 # (e.g. confirming which workspace was launched).
 pyttsx3>=2.98
+
+# ============================================================
+# Voice Overlay Dependencies (added for --overlay mode)
+# ============================================================
+
+# Offline speech recognition engine (Vosk/Kaldi) -- PRIMARY.
+# Works without internet after a one-time ~40 MB model download.
+vosk>=0.3.45
+
+# Fast fuzzy string matching for typo-tolerant command recognition.
+# "oppen dashbord" still matches "open dashboard".
+rapidfuzz>=3.6.0
+
+# Global hotkey support -- lets Ctrl+Shift+M activate the mic
+# from any application.
+keyboard>=0.13.5
+
+# Image processing -- used for enhanced overlay icon rendering.
+Pillow>=10.0.0
+
+# Optional: high-accuracy offline speech (CTranslate2 Whisper).
+# Uncomment to enable:  pip install faster-whisper
+# faster-whisper>=1.0.0
